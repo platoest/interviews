@@ -1,26 +1,54 @@
 package main
 
+// import (
+// 	"fmt"
+// 	"log"
+// 	"net/http"
+// 	_ "net/http/pprof"
+// 	"os"
+// )
+
+// func main() {
+// 	go func() {
+// 		log.Println(http.ListenAndServe("localhost:6060", nil))
+// 	}()
+// 	ch := make(chan int)
+
+// 	s := make(chan os.Signal, 1)
+// 	//signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
+
+// 	select {
+// 	case <-ch:
+// 	case <-s:
+// 		fmt.Println("stopped")
+// 	}
+// 	fmt.Println("Exit")
+// }
+
 import (
 	"fmt"
-	"log"
-	"net/http"
-	_ "net/http/pprof"
-	"os"
+	"sync"
 )
 
+const N = 10
+
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-	ch := make(chan int)
+	m := make(map[int]int)
 
-	s := make(chan os.Signal, 1)
-	//signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
 
-	select {
-	case <-ch:
-	case <-s:
-		fmt.Println("stopped")
+	wg.Add(N)
+
+	for i := 0; i < N; i++ {
+		go func() {
+			defer wg.Done()
+			mu.Lock()
+			m[i] = i
+			mu.Unlock()
+		}()
 	}
-	fmt.Println("Exit")
+	wg.Wait()
+
+	fmt.Println(m)
 }
